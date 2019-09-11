@@ -51,9 +51,12 @@ enum Opt {
         /// Length of a path
         #[structopt(long, default_value = "2")]
         path_len: usize,
-        /// Sample size
+        /// Maximum sample size
         #[structopt(long, default_value = "1000")]
         sample_size: usize,
+        /// Drop duplicated paths
+        #[structopt(long)]
+        dedup: bool,
     },
 }
 
@@ -79,7 +82,8 @@ fn main() -> Result<(), std::io::Error> {
             file,
             path_len,
             sample_size,
-        } => sample_path(file, path_len, sample_size),
+            dedup,
+        } => sample_path(file, path_len, sample_size, dedup),
     }
 }
 
@@ -137,15 +141,30 @@ fn cutoff_at_frequency(
     Ok(())
 }
 
-fn sample_path(file: PathBuf, path_len: usize, sample_size: usize) -> Result<(), std::io::Error> {
+fn sample_path(
+    file: PathBuf,
+    path_len: usize,
+    sample_size: usize,
+    dedup: bool,
+) -> Result<(), std::io::Error> {
     let content = fs::read_to_string(file)?;
     let triples = read_triples(&content, TripleOrder::HRT);
     let kg = KG::from_triples(triples);
     let mut rng = rand::thread_rng();
+    let mut paths: Vec<_> = (0..sample_size)
+        .map(|_| kg.sample_path(path_len, &mut rng))
+        .collect();
+
+    if dedup {
+        paths.sort_unstable();
+        paths.dedup();
+    }
+
     let out = stdout();
     let mut out = BufWriter::new(out.lock());
-    for _ in 0..sample_size {
-        writeln!(out, "{}", kg.sample_path(path_len, &mut rng))?;
+    for path in paths {
+        writeln!(out, "{}", path)?;
     }
+
     Ok(())
 }
