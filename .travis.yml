@@ -13,7 +13,7 @@ deploy:
   api_key:
     secure: H9s/sJBmdStL3YU5iE5Npglw+qoTdxerDKIS/4peSXuON6eaS4nlDrNIfPm5uimXYdbUDvpONmMGO94h60sFyvs1j8Eb05ag8GEU7YFL/U3X+9DIRfBPqRs4Kag4BX4CAl2nNEotIx7YRcQvhvH8OPC6B1B7qGkhydtcnj9JdIYm5fwi14Jpu2FXJlNgLcBxo27OYDqpQBNj4sb6E/XHWDmhebpAo5BaUNWimJzBrHpwlej5bmSLBTINDO8eJ3bFSv9v/n3GmcgYXuJhQhpTrM6IWPsbf6CGevDyB6P9lGoPbIBGu8vnZkiYe89pFDLmUIKiA3W08sCPH25cm/0sIrgLnJGA5BxeyQykKmgfjninMSqZoit28EFE2YjCpoDeSg9MetLk7AYmN2bytDqsv1jrVZDSkrsH8UBKZ/VclJ0vGIASZzQEGRMlKlDPrPpbyRZi6l8uF0DQB2QJYvLUzntbNjqZzZuhg9k6MU66nfgWlnIzDFfHwAmXBJL5LMggSrvNuSC7JiTUWXo8S/QszrsT0WcsD1QoiVUEEyKQw2Pr9btxlaNn0kzoNp+ZVP5upd1//7ymJM62lJsREQvNSDFJiJuc+DxUSGWLEBEi1baWEg9D/edrkV1Zxp99i6vISMhja56fIQUtG5tjdaYFH13hCq3RIlXNeozN5et2GXA=
   file_glob: true
-  file: "myapp-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.*"
+  file: "kb-tool-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.*"
   skip_cleanup: true
   on:
     repo: reiyw/kb-tool
