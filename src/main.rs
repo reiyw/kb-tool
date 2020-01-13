@@ -152,7 +152,7 @@ fn sample_path(
     let kg = KG::from_triples(triples);
     let mut rng = rand::thread_rng();
     let mut paths: Vec<_> = (0..sample_size)
-        .map(|_| kg.sample_path(path_len, &mut rng))
+        .map(|_| kg.sample_path(path_len, &mut rng, ">", "<"))
         .collect();
 
     if dedup {

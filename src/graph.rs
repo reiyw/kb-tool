@@ -74,7 +74,13 @@ impl<'a> KG<'a> {
         }
     }
 
-    pub fn sample_path<R: Rng + ?Sized>(&self, path_len: usize, rng: &mut R) -> String {
+    pub fn sample_path<R: Rng + ?Sized>(
+        &self,
+        path_len: usize,
+        rng: &mut R,
+        redge_suffix: &str,
+        ledge_suffix: &str,
+    ) -> String {
         let mut path = String::new();
         let mut node = self.select_node(rng);
         let mut prev_edge = None;
@@ -86,7 +92,7 @@ impl<'a> KG<'a> {
             path += format!(
                 "\t{}{}\t{}",
                 edge.label,
-                if fwd { ">" } else { "<" },
+                if fwd { redge_suffix } else { ledge_suffix },
                 node.label
             )
             .as_str();
@@ -137,7 +143,7 @@ mod tests {
         let triples = read_triples(&content, TripleOrder::HRT);
         let kg = KG::from_triples(triples);
         let mut rng = rand::thread_rng();
-        println!("{}", kg.sample_path(2, &mut rng));
+        println!("{}", kg.sample_path(2, &mut rng, ">", "<"));
     }
 
     #[test]
@@ -151,7 +157,7 @@ mod tests {
         println!("{:#?}", kg);
         let mut rng = rand::thread_rng();
         for _ in 0..10 {
-            println!("{}", kg.sample_path(2, &mut rng));
+            println!("{}", kg.sample_path(2, &mut rng, "::-->", "::<--"));
         }
     }
 }
