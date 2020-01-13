@@ -18,6 +18,7 @@ struct PathSampler {
     poi: Poisson<f64>,
     rng: StdRng,
     kg: KG,
+    data_size: usize,
 }
 
 #[pymethods]
@@ -33,6 +34,7 @@ impl PathSampler {
     ) {
         let content = fs::read_to_string(&data_path).unwrap();
         let triples = read_triples(&content, TripleOrder::HRT);
+        let data_size = triples.len();
         let kg = KG::from_triples(triples);
 
         let mut bytes: Vec<u8> = random_state.to_be_bytes().to_vec();
@@ -51,8 +53,14 @@ impl PathSampler {
                 poi,
                 rng,
                 kg,
+                data_size,
             }
         });
+    }
+
+    #[getter]
+    fn data_size(&self) -> PyResult<usize> {
+        Ok(self.data_size)
     }
 
     fn sample_path(&mut self, py: Python) -> PyResult<Vec<String>> {
