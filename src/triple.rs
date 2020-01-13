@@ -1,22 +1,25 @@
-// Don't generate String for each triple to avoid too much allocation.
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Triple<'a> {
-    pub head: &'a str,
-    pub relation: &'a str,
-    pub tail: &'a str,
+pub struct Triple {
+    pub head: String,
+    pub relation: String,
+    pub tail: String,
 }
 
-impl<'a> Triple<'a> {
-    pub fn new(head: &'a str, relation: &'a str, tail: &'a str) -> Self {
+impl Triple {
+    pub fn new(
+        head: impl Into<String>,
+        relation: impl Into<String>,
+        tail: impl Into<String>,
+    ) -> Self {
         Triple {
-            head,
-            relation,
-            tail,
+            head: head.into(),
+            relation: relation.into(),
+            tail: tail.into(),
         }
     }
 }
 
-pub type Triples<'a> = Vec<Triple<'a>>;
+pub type Triples = Vec<Triple>;
 
 pub enum TripleOrder {
     HRT,

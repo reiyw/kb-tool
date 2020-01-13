@@ -3,69 +3,75 @@ use rand::Rng;
 use std::collections::HashMap;
 
 #[derive(Debug)]
-struct Edge<'a> {
+struct Edge {
     id: usize,
     src: usize,
     dst: usize,
-    label: &'a str,
+    label: String,
 }
 
-#[derive(Debug)]
-struct Node<'a> {
-    id: usize,
-    edges_fwd: Vec<usize>,
-    edges_rev: Vec<usize>,
-    label: &'a str,
-}
-
-impl<'a> Node<'a> {
-    fn new(label: &'a str, id: usize) -> Self {
-        Node {
+impl Edge {
+    fn new(id: usize, src: usize, dst: usize, label: impl Into<String>) -> Self {
+        Edge {
             id,
-            edges_fwd: Vec::new(),
-            edges_rev: Vec::new(),
-            label,
+            src,
+            dst,
+            label: label.into(),
         }
     }
 }
 
 #[derive(Debug)]
-pub struct KG<'a> {
-    node_ids: HashMap<&'a str, usize>,
-    nodes: Vec<Node<'a>>,
-    edges: Vec<Edge<'a>>,
+struct Node {
+    id: usize,
+    edges_fwd: Vec<usize>,
+    edges_rev: Vec<usize>,
+    label: String,
 }
 
-impl<'a> KG<'a> {
-    pub fn from_triples(triples: Triples<'a>) -> Self {
+impl Node {
+    fn new(label: impl Into<String>, id: usize) -> Self {
+        Node {
+            id,
+            edges_fwd: Vec::new(),
+            edges_rev: Vec::new(),
+            label: label.into(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct KG {
+    node_ids: HashMap<String, usize>,
+    nodes: Vec<Node>,
+    edges: Vec<Edge>,
+}
+
+impl KG {
+    pub fn from_triples(triples: Triples) -> Self {
         let mut node_ids = HashMap::new();
         let mut nodes: Vec<Node> = Vec::new();
         let mut edges = Vec::new();
         for tri in &triples {
-            if !node_ids.contains_key(tri.head) {
+            if !node_ids.contains_key(&tri.head) {
                 let id = nodes.len();
-                node_ids.insert(tri.head, id);
-                nodes.push(Node::new(tri.head, id));
+                node_ids.insert(tri.head.clone(), id);
+                nodes.push(Node::new(&tri.head, id));
             }
-            let &i = node_ids.get(tri.head).unwrap();
+            let &i = node_ids.get(&tri.head).unwrap();
             let head = nodes.get_mut(i).unwrap();
             head.edges_fwd.push(edges.len());
 
-            if !node_ids.contains_key(tri.tail) {
+            if !node_ids.contains_key(&tri.tail) {
                 let id = nodes.len();
-                node_ids.insert(tri.tail, id);
-                nodes.push(Node::new(tri.tail, id));
+                node_ids.insert(tri.tail.clone(), id);
+                nodes.push(Node::new(&tri.tail, id));
             }
-            let &j = node_ids.get(tri.tail).unwrap();
+            let &j = node_ids.get(&tri.tail).unwrap();
             let tail = nodes.get_mut(j).unwrap();
             tail.edges_rev.push(edges.len());
 
-            edges.push(Edge {
-                id: edges.len(),
-                src: i,
-                dst: j,
-                label: tri.relation,
-            });
+            edges.push(Edge::new(edges.len(), i, j, &tri.relation));
         }
         KG {
             node_ids,
@@ -80,23 +86,19 @@ impl<'a> KG<'a> {
         rng: &mut R,
         redge_suffix: &str,
         ledge_suffix: &str,
-    ) -> String {
-        let mut path = String::new();
+    ) -> Vec<String> {
+        let mut path = Vec::new();
         let mut node = self.select_node(rng);
         let mut prev_edge = None;
-        path.push_str(node.label);
+        path.push(node.label.clone());
         for _ in 0..path_len {
             let (edge, fwd) = self.select_edge(node, prev_edge, rng);
             prev_edge = Some(edge);
             node = &self.nodes[if fwd { edge.dst } else { edge.src }];
-            path += format!(
-                "\t{}{}\t{}",
-                edge.label,
-                if fwd { redge_suffix } else { ledge_suffix },
-                node.label
-            )
-            .as_str();
+            path.push(edge.label.clone() + if fwd { redge_suffix } else { ledge_suffix });
+            // path.push(node.label);
         }
+        path.push(node.label.clone());
         path
     }
 
@@ -143,7 +145,7 @@ mod tests {
         let triples = read_triples(&content, TripleOrder::HRT);
         let kg = KG::from_triples(triples);
         let mut rng = rand::thread_rng();
-        println!("{}", kg.sample_path(2, &mut rng, ">", "<"));
+        println!("{:?}", kg.sample_path(2, &mut rng, ">", "<"));
     }
 
     #[test]
@@ -157,7 +159,7 @@ mod tests {
         println!("{:#?}", kg);
         let mut rng = rand::thread_rng();
         for _ in 0..10 {
-            println!("{}", kg.sample_path(2, &mut rng, "::-->", "::<--"));
+            println!("{:?}", kg.sample_path(2, &mut rng, "::-->", "::<--"));
         }
     }
 }
