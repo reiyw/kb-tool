@@ -7,19 +7,10 @@ ENV PATH /opt/python/cp35-cp35m/bin/:/opt/python/cp36-cp36m/bin/:/opt/python/cp3
 ENV USER root
 
 RUN curl https://sh.rustup.rs -sSf | \
-    # sh -s -- --default-toolchain nightly -y \
-    sh -s -- -y \
-    && rustup toolchain add nightly-2019-08-21 \
-    && rustup default nightly-2019-08-21 \
-    && python3 -m pip install --no-cache-dir cffi \
+    sh -s -- --default-toolchain nightly -y \
+    && python3 -m pip install --no-cache-dir cffi maturin \
     && mkdir /io
-
-ADD . /maturin/
-
-RUN cargo +nightly-2019-08-21 rustc --bin maturin --manifest-path /maturin/Cargo.toml -- -C link-arg=-s \
-    && mv /maturin/target/debug/maturin /usr/bin/maturin \
-    && rm -rf /maturin
 
 WORKDIR /io
 
-ENTRYPOINT ["/usr/bin/maturin"]
+ENTRYPOINT ["maturin"]

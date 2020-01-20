@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+
+maturin build --release \
+  -i /Users/reiyw/.pyenv/versions/3.6.9/bin/python \
+  -i /Users/reiyw/.pyenv/versions/3.7.5/bin/python
+docker run -v $(pwd):/io -it reiyw/maturin build --release
