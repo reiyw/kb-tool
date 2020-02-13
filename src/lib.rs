@@ -63,7 +63,7 @@ impl PathSampler {
         Ok(self.data_size)
     }
 
-    fn sample_path(&mut self, py: Python) -> PyResult<Vec<String>> {
+    fn sample_path(&mut self, _py: Python) -> PyResult<Vec<String>> {
         let v: f64 = self.poi.sample(&mut self.rng);
         let path_len = cmp::min((v + 1.0) as usize, self.max_path_len);
         Ok(self
