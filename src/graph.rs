@@ -1,6 +1,8 @@
 use crate::triple::Triples;
+use ndarray::prelude::*;
+use ndarray::{Array, Ix1, Ix2};
 use rand::Rng;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 struct Edge {
@@ -45,6 +47,8 @@ pub struct KG {
     node_ids: HashMap<String, usize>,
     nodes: Vec<Node>,
     edges: Vec<Edge>,
+    // adj_matrices: HashMap<String, Array<u32, Ix2>>,
+    correct_candidates: HashMap<String, HashSet<usize>>,
 }
 
 impl KG {
@@ -73,10 +77,46 @@ impl KG {
 
             edges.push(Edge::new(edges.len(), i, j, &tri.relation));
         }
+
+        // let mut adj_matrices: HashMap<_, Array<u32, Ix2>> = HashMap::new();
+        let mut correct_candidates = HashMap::new();
+        for node in &nodes {
+            for &edge_i in &node.edges_fwd {
+                let edge = &edges[edge_i];
+                let edge_label = format!("{}::-->", edge.label);
+
+                // let mat = adj_matrices
+                //     .entry(edge_label.clone())
+                //     .or_insert(Array::zeros((nodes.len(), nodes.len())));
+                // mat.slice_mut(s![edge.src, edge.dst]).fill(1);
+
+                let tails = correct_candidates
+                    .entry(edge_label.clone())
+                    .or_insert(HashSet::new());
+                tails.insert(edge.dst);
+            }
+            for &edge_i in &node.edges_rev {
+                let edge = &edges[edge_i];
+                let edge_label = format!("{}::<--", edge.label);
+
+                // let mat = adj_matrices
+                //     .entry(edge_label.clone())
+                //     .or_insert(Array::zeros((nodes.len(), nodes.len())));
+                // mat.slice_mut(s![edge.dst, edge.src]).fill(1);
+
+                let tails = correct_candidates
+                    .entry(edge_label.clone())
+                    .or_insert(HashSet::new());
+                tails.insert(edge.src);
+            }
+        }
+
         KG {
             node_ids,
             nodes,
             edges,
+            // adj_matrices,
+            correct_candidates,
         }
     }
 
@@ -130,6 +170,48 @@ impl KG {
         };
         let i = rng.gen_range(0, edges.len());
         (&self.edges[edges[i]], i < boundary)
+    }
+
+    pub fn sample_negative_tail<R: Rng + ?Sized>(
+        &self,
+        path: &Vec<String>,
+        rng: &mut R,
+    ) -> Option<String> {
+        let head = &path[0];
+        let tail_i = self.node_ids[&path[path.len() - 1]];
+        let candidates = &self.correct_candidates[&path[path.len() - 2]];
+
+        // 実際に辿る処理が重かったので応急処置的に
+        let candidates: Vec<usize> = candidates
+            .iter()
+            .filter(|&&i| i != tail_i)
+            .cloned()
+            .collect();
+
+        // let i = self.node_ids[head];
+        // let mut vec: Array<u32, Ix1> = Array::zeros(self.nodes.len());
+        // vec.slice_mut(s![i]).fill(1);
+        // for rel in &path[1..path.len() - 1] {
+        //     let mat = &self.adj_matrices[rel];
+        //     vec = vec.dot(mat);
+        // }
+
+        // // 実際に head から path を辿って到達できるノードを負例候補から削除
+        // let actual_tails: HashSet<usize> = vec
+        //     .indexed_iter()
+        //     .filter_map(|(i, val)| if *val > 0 { Some(i) } else { None })
+        //     .collect();
+        // let candidates: Vec<usize> = candidates.difference(&actual_tails).cloned().collect();
+
+        if candidates.len() == 0 {
+            // None
+            Some(self.nodes[rng.gen_range(0, self.nodes.len())].label.clone())
+        } else {
+            let i = rng.gen_range(0, candidates.len());
+            Some(self.nodes[candidates[i]].label.clone())
+        }
+
+        // Some("".into())
     }
 }
 
