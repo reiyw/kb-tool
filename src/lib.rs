@@ -71,13 +71,29 @@ impl PathSampler {
             .sample_path(path_len, &mut self.rng, "::-->", "::<--"))
     }
 
-    fn sample_path_with_negative(&mut self, _py: Python) -> PyResult<(Vec<String>, String)> {
+    fn sample_path_with_negative_uniformly(
+        &mut self,
+        _py: Python,
+    ) -> PyResult<(Vec<String>, String)> {
         let v: f64 = self.poi.sample(&mut self.rng);
         let path_len = cmp::min((v + 1.0) as usize, self.max_path_len);
         let path = self
             .kg
             .sample_path(path_len, &mut self.rng, "::-->", "::<--");
-        let negative_tail = self.kg.sample_negative_tail(&path, &mut self.rng);
+        let negative_tail = self.kg.sample_negative_tail_uniformly(&path, &mut self.rng);
+        Ok((path, negative_tail.unwrap_or("".into())))
+    }
+
+    fn sample_path_with_negative_near_miss(
+        &mut self,
+        _py: Python,
+    ) -> PyResult<(Vec<String>, String)> {
+        let v: f64 = self.poi.sample(&mut self.rng);
+        let path_len = cmp::min((v + 1.0) as usize, self.max_path_len);
+        let path = self
+            .kg
+            .sample_path(path_len, &mut self.rng, "::-->", "::<--");
+        let negative_tail = self.kg.sample_negative_tail_near_miss(&path, &mut self.rng);
         Ok((path, negative_tail.unwrap_or("".into())))
     }
 }
